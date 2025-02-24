@@ -35,6 +35,9 @@ esConfig: {}
 #  log4j2.properties: |
 #    key = value
 
+postInstallConfig : {}
+# can provide scripts to install elastic configurations only configurable via api
+
 createCert: true
 
 esJvmOptions: {}

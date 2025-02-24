@@ -1,0 +1,73 @@
+{{- if .Values.postInstallConfig }}
+{{- $esName := include "elasticsearch.uname" . -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "elasticsearch.uname" . }}-post-install-job
+  labels:
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: "{{ .Chart.Name }}"
+    app: "{{ template "elasticsearch.uname" . }}"
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        app: "{{ template "elasticsearch.uname" . }}-job"
+        release: {{ .Release.Name | quote }}
+    spec:
+      restartPolicy: OnFailure
+      volumes:
+        - name: scripts-volume
+          configMap:
+            name: {{ template "elasticsearch.uname" . }}-post-install
+            defaultMode: 0755
+      containers:
+      - name: post-install-executor
+        image: curlimages/curl:latest
+        env:
+        - name: ES_HOST
+          value: "{{ $esName }}"
+        - name: ES_PORT
+          value: {{ .Values.httpPort | quote }}
+        - name: ES_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "elasticsearch.uname" . }}-credentials
+              key: username
+        - name: ES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "elasticsearch.uname" . }}-credentials
+              key: password
+        volumeMounts:
+          - name: scripts-volume
+            mountPath: /scripts
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Starting post-install scripts execution"
+            
+            # Executing all scripts in the ConfigMap
+            for script in /scripts/*.sh; do
+              if [ -f "$script" ]; then
+                echo "Executing $script..."
+                chmod +x "$script"
+                sh "$script"
+                
+                # Check if script executed successfully
+                if [ $? -ne 0 ]; then
+                  echo "Error executing $script"
+                  exit 1
+                fi
+                
+                echo "Successfully executed $script"
+              fi
+            done
+            
+            echo "All post-install scripts completed successfully"
+{{- end -}}

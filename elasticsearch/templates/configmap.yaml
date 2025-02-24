@@ -32,3 +32,20 @@ data:
 {{ $config | indent 4 -}}
 {{- end -}}
 {{- end -}}
+{{- if .Values.postInstallConfig }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "elasticsearch.uname" . }}-post-install
+  labels:
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: "{{ .Chart.Name }}"
+    app: "{{ template "elasticsearch.uname" . }}"
+  data:
+{{- range $path, $config := .Values.postInstallConfig }}
+  {{ $path }}: |
+{{ $config | indent 4 -}}
+  {{- end -}}
+{{- end -}}

@@ -3,6 +3,6 @@
 helmChartPipeline(
     script: this,
     charts: ["filebeat", "logstash", "elasticsearch", "kibana"],
-    version: "8.1.0",
+    version: "8.1.0-test",
     slackChannel: "#kubernetes"
 )
