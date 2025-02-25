@@ -43,7 +43,7 @@ metadata:
     release: {{ .Release.Name | quote }}
     chart: "{{ .Chart.Name }}"
     app: "{{ template "elasticsearch.uname" . }}"
-  data:
+data:
 {{- range $path, $config := .Values.postInstallConfig }}
   {{ $path }}: |
 {{ $config | indent 4 -}}
